@@ -36,7 +36,7 @@ Run:
 
 Expected result:
 
-TESTS: 3/3
+TEST: 4/4
 
 ## Port
 
