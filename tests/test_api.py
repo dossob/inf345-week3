@@ -48,6 +48,22 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIsInstance(data, list)
 
+    def test_create_note(self):
+        data = json.dumps({"text": "Test note"}).encode()
+
+        request = urllib.request.Request(
+            "http://127.0.0.1:9091/notes",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+
+        response = urllib.request.urlopen(request)
+        result = json.loads(response.read())
+
+        self.assertEqual(response.status, 201)
+        self.assertEqual(result["text"], "Test note")
+
 
 if __name__ == "__main__":
     unittest.main()
