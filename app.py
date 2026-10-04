@@ -40,6 +40,16 @@ def get_notes():
     return jsonify(notes)
 
 
+@app.route("/notes/<int:note_id>", methods=["DELETE"])
+def delete_note(note_id):
+    for note in notes:
+        if note["id"] == note_id:
+            notes.remove(note)
+            return jsonify({"message": "Note deleted"})
+
+    return jsonify({"error": "Note not found"}), 404
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)

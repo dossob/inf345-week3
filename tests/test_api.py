@@ -64,6 +64,32 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status, 201)
         self.assertEqual(result["text"], "Test note")
 
+    def test_delete_note(self):
+        data = json.dumps({"text": "Delete me"}).encode()
+
+        create_request = urllib.request.Request(
+            "http://127.0.0.1:9091/notes",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+
+        create_response = urllib.request.urlopen(create_request)
+        note = json.loads(create_response.read())
+
+        note_id = note["id"]
+
+        delete_request = urllib.request.Request(
+            f"http://127.0.0.1:9091/notes/{note_id}",
+            method="DELETE"
+        )
+
+        response = urllib.request.urlopen(delete_request)
+        result = json.loads(response.read())
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(result["message"], "Note deleted")
+
 
 if __name__ == "__main__":
     unittest.main()
