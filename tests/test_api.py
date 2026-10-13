@@ -4,14 +4,20 @@ import json
 import subprocess
 import time
 import os
+import socket
 
 
 class TestAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        sock = socket.socket()
+        sock.bind(("127.0.0.1", 0))
+        cls.port = sock.getsockname()[1]
+        sock.close()
+
         env = os.environ.copy()
-        env["PORT"] = "9091"
+        env["PORT"] = str(cls.port)
 
         cls.server = subprocess.Popen(
             ["./scripts/run.sh"],
@@ -27,10 +33,11 @@ class TestAPI(unittest.TestCase):
         cls.server.terminate()
         cls.server.wait()
 
+    def url(self, path):
+        return f"http://127.0.0.1:{self.port}{path}"
+
     def get(self, path):
-        response = urllib.request.urlopen(
-            "http://127.0.0.1:9091" + path
-        )
+        response = urllib.request.urlopen(self.url(path))
         return response.status, json.loads(response.read())
 
     def test_home(self):
@@ -52,7 +59,7 @@ class TestAPI(unittest.TestCase):
         data = json.dumps({"text": "Test note"}).encode()
 
         request = urllib.request.Request(
-            "http://127.0.0.1:9091/notes",
+            self.url("/notes"),
             data=data,
             headers={"Content-Type": "application/json"},
             method="POST"
@@ -68,7 +75,7 @@ class TestAPI(unittest.TestCase):
         data = json.dumps({"text": "Delete me"}).encode()
 
         create_request = urllib.request.Request(
-            "http://127.0.0.1:9091/notes",
+            self.url("/notes"),
             data=data,
             headers={"Content-Type": "application/json"},
             method="POST"
@@ -77,10 +84,8 @@ class TestAPI(unittest.TestCase):
         create_response = urllib.request.urlopen(create_request)
         note = json.loads(create_response.read())
 
-        note_id = note["id"]
-
         delete_request = urllib.request.Request(
-            f"http://127.0.0.1:9091/notes/{note_id}",
+            self.url(f"/notes/{note['id']}"),
             method="DELETE"
         )
 
