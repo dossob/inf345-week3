@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 
 output=$(python3 -m unittest discover -s tests -q 2>&1) || {
