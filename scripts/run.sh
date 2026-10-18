@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-PORT="${PORT:-8080}"
+export PORT="${PORT:-8080}"
 
 cd "$(dirname "$0")/.."
-python3 app.py
+exec python3 app.py
