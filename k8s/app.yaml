@@ -20,13 +20,19 @@ spec:
     spec:
       containers:
         - name: app
-          # 7. your M3 image: owner/project in lowercase, a colon, the FULL 40-character SHA
           image: ghcr.io/dossob/inf345-week3:afaa7f911bb2002d169f828bf4c48e79a972ddca
           env:
             - name: PORT
-              value: "9123"               # 8. the port your app should listen on - you choose it
+              value: "9123"
           ports:
-            - containerPort: 9123         # 9. the same number as 8
+            - containerPort: 9123
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9123
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
 ---
 apiVersion: v1
 kind: Service
@@ -37,4 +43,4 @@ spec:
     app: mine
   ports:
     - port: 80
-      targetPort: 9123                    # 10. the same number again
+      targetPort: 9123
