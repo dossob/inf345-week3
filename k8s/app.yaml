@@ -1,9 +1,3 @@
-# Week 8 lab, Step 6. YOUR M3 image on YOUR cluster - the first step of M4.
-# Fill the four ____ blanks, then:
-#   kubectl apply -f playground/mine.yaml
-#   kubectl rollout status deployment/mine --timeout=120s
-#   kubectl port-forward service/mine 8080:80      and in another terminal:
-#   curl -i localhost:8080/healthz
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,14 +12,22 @@ spec:
       labels:
         app: mine
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: app
           image: ghcr.io/dossob/inf345-week3:afaa7f911bb2002d169f828bf4c48e79a972ddca
-          env:
-            - name: PORT
-              value: "9123"
           ports:
             - containerPort: 9123
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: API_KEY
           readinessProbe:
             httpGet:
               path: /healthz
@@ -33,6 +35,20 @@ spec:
             periodSeconds: 5
             failureThreshold: 3
             timeoutSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9123
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -44,3 +60,11 @@ spec:
   ports:
     - port: 80
       targetPort: 9123
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  PORT: "9123"
+  APP_MESSAGE: "Notes API is running on Kubernetes"
