@@ -3,6 +3,9 @@ import os
 
 app = Flask(__name__)
 
+APP_MESSAGE = os.environ.get("APP_MESSAGE", "Notes API is running")
+API_KEY = os.environ.get("API_KEY", "")
+
 notes = [
     {"id": 1, "text": "Learn Flask"},
     {"id": 2, "text": "Complete INF 345 Week 3"}
@@ -12,7 +15,7 @@ notes = [
 @app.route("/")
 def home():
     return jsonify({
-        "message": "Notes API is running"
+        "message": APP_MESSAGE
     })
 
 
@@ -27,14 +30,11 @@ def health():
 def get_notes():
     if request.method == "POST":
         data = request.get_json()
-
         note = {
             "id": len(notes) + 1,
             "text": data["text"]
         }
-
         notes.append(note)
-
         return jsonify(note), 201
 
     return jsonify(notes)

@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mine
+  template:
+    metadata:
+      labels:
+        app: mine
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: app
+          image: ghcr.io/dossob/inf345-week3:afaa7f911bb2002d169f828bf4c48e79a972ddca
+          ports:
+            - containerPort: 9123
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: API_KEY
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9123
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9123
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mine
+spec:
+  selector:
+    app: mine
+  ports:
+    - port: 80
+      targetPort: 9123
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  PORT: "9123"
+  APP_MESSAGE: "Notes API is running on Kubernetes"
