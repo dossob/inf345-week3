@@ -1,0 +1,70 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/**", ".github/workflows/terraform.yml"]
+  pull_request:
+    paths: ["infra/**", ".github/workflows/terraform.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    working-directory: infra
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plan:
+    name: fmt, validate, plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TF_IN_AUTOMATION: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.4"
+          terraform_wrapper: false
+
+      - name: Formatting is canonical
+        run: terraform fmt -check -recursive -diff
+
+      - name: Download the provider the lock file names
+        run: terraform init -input=false
+
+      - name: The configuration is valid
+        run: terraform validate
+
+      - name: What would change
+        run: terraform plan -input=false -lock=false
+
+      - name: Run the Week 11 course checker
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/check_iac.py" https://raw.githubusercontent.com/inf345/inf345-week11-lab/main/check_iac.py
+          python3 "$RUNNER_TEMP/check_iac.py" --path .. --tool terraform
+
+      # Manual runs only ("Run workflow"): build it for real on the runner's
+      # own Docker, call /healthz, and throw it all away again.
+      - name: Apply on this runner
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -input=false -auto-approve
+
+      - name: The service answers
+        if: github.event_name == 'workflow_dispatch'
+        run: curl --fail --silent --show-error --retry 15 --retry-delay 1 --retry-all-errors "$(terraform output -raw healthz_url)"
+
+      - name: Destroy it again
+        if: always() && github.event_name == 'workflow_dispatch'
+        run: terraform destroy -input=false -auto-approve
