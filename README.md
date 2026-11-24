@@ -95,3 +95,26 @@ Ubuntu 24.04 (amd64); a local Apple Silicon build is arm64.
 
 Week 5 builds and tests the image. Publishing to GHCR and the SHA-tagged image
 belong to Week 6 and are required for the later M3 milestone.
+
+## GitOps on Kubernetes
+
+Argo CD follows `main` and deploys `k8s/` into the `default` namespace.
+It automatically prunes removed resources and repairs manual changes.
+Create `app-secret` with the `API_KEY` key in that namespace before applying
+`argocd/application.yaml`. GitHub Actions builds and publishes the image to GHCR.
+
+## Rollback
+
+Argo CD deploys the image pinned in `k8s/app.yaml` on `main`. To restore the
+previous version, revert the commit that changed the image tag and push:
+
+```bash
+git switch main
+git pull --ff-only
+git log --oneline -- k8s/app.yaml
+git revert <image-bump-commit>
+git push origin main
+```
+
+If the image bump was merged with a merge commit, use
+`git revert -m 1 <merge-commit>`. Argo CD will sync the restored image.
