@@ -8,3 +8,11 @@ __pycache__/
 *.pem
 *.key
 evidence/
+
+# Terraform state, provider cache, and local inputs
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+*.tfplan
+crash.log
