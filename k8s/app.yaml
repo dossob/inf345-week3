@@ -16,7 +16,7 @@ spec:
         runAsNonRoot: true
       containers:
         - name: app
-          image: ghcr.io/dossob/inf345-week3:afaa7f911bb2002d169f828bf4c48e79a972ddca
+          image: ghcr.io/dossob/inf345-week3:4e60d74cc2b0ef28650dd5c212161854151045a0
           ports:
             - containerPort: 9123
           envFrom:
